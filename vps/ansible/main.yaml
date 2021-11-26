@@ -1,0 +1,26 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install OpenJDK 11
+      apt:
+        name: openjdk-11-jdk
+        update_cache: yes
+    - name: Install Jenkins step 1
+      uri:
+        method: GET
+        url: "https://pkg.jenkins.io/debian-stable/jenkins.io.key"
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+    - name: Install Jenkins step 2
+      copy:
+        content: 'deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/
+        '
+        dest: /etc/apt/sources.list.d/jenkins.list
+    - name: Install Jenkins step 3
+      apt:
+        name: jenkins
+        update_cache: yes
+    - name: Get initial admin password
+      slurp:
+        src: /var/lib/jenkins/secrets/initialAdminPassword
+      register: initialpwd
+    - local_action: copy content="{{initialpwd['content'] | b64decode}}" dest=/vps/output/initialpwd
